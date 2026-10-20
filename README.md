@@ -66,7 +66,7 @@ Puoi eseguire `opencode.sh` da qualsiasi directory del tuo sistema (anche aggiun
 
 1.  **Carica la configurazione:** Legge il file `.env` situato nella directory dello script e verifica la presenza di `LLM_API_BASE` e `LLM_API_KEY`.
 2.  **Compila l'immagine Docker (se necessario):** Costruisce l'immagine `opencode-local:latest` (con Node 22, `opencode-ai`, `git`, `ripgrep`, `python3` e la configurazione `/etc/opencode/opencode.json`) solo se l'immagine non esiste ancora o se sono cambiati `OPENCODE_VERSION`, `MODEL` o `AVAILABLE_MODELS`.
-3.  **Avvia il container:** Esegue Opencode con l'utente corrente (`uid:gid`), montando:
+3.  **Avvia il container:** Esegue Opencode con l'utente `node` del container, montando:
     -   La directory di lavoro corrente (`$PWD`) in `/work`.
     -   Il volume Docker `opencode-data` in `/home/opencode` (`HOME` del container).
     -   Il file `~/.gitconfig` dell'host in `/home/opencode/.gitconfig` (in sola lettura).
