@@ -31,6 +31,13 @@ DATA_DIR="${OPENCODE_DATA_DIR:-$SCRIPT_DIR/opencode-data}"
 # Assicura che la struttura della cartella dati locale esista
 mkdir -p "$DATA_DIR/skills" "$DATA_DIR/plugins" "$DATA_DIR/.config/opencode"
 
+# Disabilita il background service condiviso di Opencode 2.x (incompatibile con container isolati che condividono $DATA_DIR)
+SERVICE_CONFIG="$DATA_DIR/.config/opencode/service.json"
+if ! grep -q '"disabled"[[:space:]]*:[[:space:]]*true' "$SERVICE_CONFIG" 2>/dev/null; then
+  printf '{\n  "disabled": true\n}\n' > "$SERVICE_CONFIG"
+fi
+rm -f "$DATA_DIR/.local/state/opencode/service.json"
+
 # Assicuriamoci che i parametri per LiteLLM siano presenti
 if [[ -z "${LLM_API_BASE:-}" ]] || [[ -z "${LLM_API_KEY:-}" ]]; then
   echo "Errore: LLM_API_BASE o LLM_API_KEY non sono definite nel file .env" >&2
