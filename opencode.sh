@@ -41,7 +41,6 @@ fi
 OPENCODE_VERSION="$(echo "${OPENCODE_VERSION:-latest}" | xargs)"
 MODEL="$(echo "${MODEL:-gemini/gemini-4-argon}" | xargs)"
 AVAILABLE_MODELS="$(echo "${AVAILABLE_MODELS:-$MODEL}" | xargs)"
-OPENCODE_MODEL="litellm/${MODEL#litellm/}"
 
 # 2. Compila l'immagine Docker se non esiste, se i parametri di build o il Dockerfile sono cambiati, o se forzato con REBUILD=1
 DOCKERFILE_HASH="$(shasum -a 256 "$BUILD_DIR/Dockerfile" 2>/dev/null | awk '{print $1}' || sha256sum "$BUILD_DIR/Dockerfile" 2>/dev/null | awk '{print $1}' || true)"
@@ -88,4 +87,4 @@ exec docker run --rm "${TTY_FLAGS[@]}" \
   -v "$PWD":/work \
   -v "$DATA_DIR":/home/opencode \
   "${GITCONFIG_MOUNT[@]}" \
-  "$IMAGE" --model "$OPENCODE_MODEL" "$@"
+  "$IMAGE" "$@"

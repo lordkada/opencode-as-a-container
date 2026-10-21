@@ -4,7 +4,7 @@ ARG OPENCODE_VERSION=latest
 ARG AVAILABLE_MODELS="gemini/gemini-4-argon"
 ARG DEFAULT_MODEL="gemini/gemini-4-argon"
 
-RUN npm install -g "opencode-ai@${OPENCODE_VERSION}" \
+RUN npm install -g "@opencode/cli@${OPENCODE_VERSION}" \
  && apt-get update \
  && apt-get install -y --no-install-recommends git ca-certificates ripgrep python3 \
  && rm -rf /var/lib/apt/lists/*

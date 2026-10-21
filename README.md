@@ -2,7 +2,7 @@
 
 ## Scopo
 
-Questo repository contiene un `Dockerfile` e lo script `opencode.sh` per eseguire **Opencode** (`opencode-ai`) all'interno di un container Docker isolato, configurato per utilizzare un proxy compatibile con OpenAI / LiteLLM e montando la directory di lavoro corrente.
+Questo repository contiene un `Dockerfile` e lo script `opencode.sh` per eseguire **Opencode** (`@opencode/cli`) all'interno di un container Docker isolato, configurato per utilizzare un proxy compatibile con OpenAI / LiteLLM e montando la directory di lavoro corrente.
 
 ## Prerequisiti
 
@@ -40,7 +40,7 @@ cp .env.template .env
 | :--- | :---: | :--- | :--- |
 | `LLM_API_BASE` | Sì | - | URL base del server LiteLLM o proxy compatibile OpenAI (es. `http://host.docker.internal:4000`). |
 | `LLM_API_KEY` | Sì | - | Chiave API per autenticarsi sul server LiteLLM. |
-| `OPENCODE_VERSION` | No | `latest` | Versione del pacchetto npm `opencode-ai` da installare nel container. |
+| `OPENCODE_VERSION` | No | `latest` | Versione del pacchetto npm `@opencode/cli` da installare nel container. |
 | `MODEL` | No | `gemini/gemini-4-argon` | Modello predefinito da utilizzare all'avvio. |
 | `AVAILABLE_MODELS` | No | Valore di `MODEL` | Lista di modelli disponibili (separati da virgola) configurati in `opencode.json`. |
 | `OPENCODE_IMAGE` | No | `opencode-local:latest` | Nome e tag dell'immagine Docker locale. |
