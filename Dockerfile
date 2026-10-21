@@ -34,7 +34,19 @@ RUN export MODELS="${AVAILABLE_MODELS}" && \
           } \
         }, \
         "model": defaultModel, \
-        "small_model": defaultModel \
+        "small_model": defaultModel, \
+        "skills": { \
+          "paths": [ \
+            "/home/opencode/skills", \
+            "/home/opencode/plugins" \
+          ] \
+        }, \
+        "permission": { \
+          "external_directory": { \
+            "/home/opencode/**": "allow", \
+            "/etc/opencode/**": "allow" \
+          } \
+        } \
       }; \
       require("fs").writeFileSync("/etc/opencode/opencode.json", JSON.stringify(config, null, 2)); \
     '
