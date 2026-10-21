@@ -40,8 +40,9 @@ cp .env.template .env
 | :--- | :---: | :--- | :--- |
 | `LLM_API_BASE` | Sì | - | URL base del server LiteLLM o proxy compatibile OpenAI (es. `http://host.docker.internal:4000`). |
 | `LLM_API_KEY` | Sì | - | Chiave API per autenticarsi sul server LiteLLM. |
+| `OLLAMA_API_BASE` | No | `http://host.docker.internal:11434/v1` | URL base del server Ollama in esecuzione sull'host (per la discovery automatica dei modelli locali). |
 | `OPENCODE_VERSION` | No | `latest` | Versione del pacchetto npm `@opencode/cli` da installare nel container. |
-| `MODEL` | No | `gemini/gemini-4-argon` | Modello predefinito da utilizzare all'avvio. |
+| `MODEL` | No | `gemini/gemini-4-argon` | Modello predefinito da utilizzare all'avvio (es. `gemini/gemini-4-argon` o `ollama/LFM2.5:24b`). |
 | `AVAILABLE_MODELS` | No | Valore di `MODEL` | Lista di modelli disponibili (separati da virgola) configurati in `opencode.json`. |
 | `OPENCODE_IMAGE` | No | `opencode-local:latest` | Nome e tag dell'immagine Docker locale. |
 | `OPENCODE_DATA_DIR` | No | `<SCRIPT_DIR>/opencode-data` | Percorso locale usato per persistere stato, configurazione, plugin e skill in `/home/opencode`. |

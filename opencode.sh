@@ -44,10 +44,11 @@ if [[ -z "${LLM_API_BASE:-}" ]] || [[ -z "${LLM_API_KEY:-}" ]]; then
   exit 1
 fi
 
-# Configura la versione, il modello di default e i modelli disponibili
+# Configura la versione, il modello di default, i modelli disponibili e l'endpoint Ollama
 OPENCODE_VERSION="$(echo "${OPENCODE_VERSION:-latest}" | xargs)"
 MODEL="$(echo "${MODEL:-gemini/gemini-4-argon}" | xargs)"
 AVAILABLE_MODELS="$(echo "${AVAILABLE_MODELS:-$MODEL}" | xargs)"
+OLLAMA_API_BASE="$(echo "${OLLAMA_API_BASE:-http://host.docker.internal:11434/v1}" | xargs)"
 
 # 2. Compila l'immagine Docker se non esiste, se i parametri di build o il Dockerfile sono cambiati, o se forzato con REBUILD=1
 DOCKERFILE_HASH="$(shasum -a 256 "$BUILD_DIR/Dockerfile" 2>/dev/null | awk '{print $1}' || sha256sum "$BUILD_DIR/Dockerfile" 2>/dev/null | awk '{print $1}' || true)"
@@ -91,6 +92,7 @@ GITCONFIG_MOUNT=()
 exec docker run --rm "${TTY_FLAGS[@]}" \
   -e LLM_API_BASE="$LLM_API_BASE" \
   -e LLM_API_KEY="$LLM_API_KEY" \
+  -e OLLAMA_API_BASE="$OLLAMA_API_BASE" \
   -v "$PWD":/work \
   -v "$DATA_DIR":/home/opencode \
   "${GITCONFIG_MOUNT[@]}" \

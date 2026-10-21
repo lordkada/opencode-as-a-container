@@ -18,35 +18,36 @@ RUN export MODELS="${AVAILABLE_MODELS}" && \
     node -e ' \
       const models = process.env.MODELS.split(",").map(m => m.trim()).filter(Boolean); \
       const rawDefault = process.env.DEFAULT_MODEL.trim(); \
-      const defaultModel = rawDefault.startsWith("litellm/") ? rawDefault : `litellm/${rawDefault}`; \
+      const defaultModel = (rawDefault.startsWith("litellm/") || rawDefault.startsWith("ollama/")) ? rawDefault : `litellm/${rawDefault}`; \
       const config = { \
         "$schema": "https://opencode.ai/config.json", \
-        "enabled_providers": ["litellm"], \
-        "provider": { \
+        "enabled_providers": ["litellm", "ollama"], \
+        "providers": { \
           "litellm": { \
-            "npm": "@ai-sdk/openai-compatible", \
+            "package": "@opencode/ai/providers/openai-compatible", \
             "name": "LiteLLM", \
-            "options": { \
+            "settings": { \
               "baseURL": "{env:LLM_API_BASE}", \
               "apiKey": "{env:LLM_API_KEY}" \
             }, \
             "models": models.reduce((acc, m) => ({...acc, [m]: {name: m}}), {}) \
+          }, \
+          "ollama": { \
+            "settings": { \
+              "baseURL": "{env:OLLAMA_API_BASE}" \
+            } \
           } \
         }, \
         "model": defaultModel, \
         "small_model": defaultModel, \
-        "skills": { \
-          "paths": [ \
-            "/home/opencode/skills", \
-            "/home/opencode/plugins" \
-          ] \
-        }, \
-        "permission": { \
-          "external_directory": { \
-            "/home/opencode/**": "allow", \
-            "/etc/opencode/**": "allow" \
-          } \
-        } \
+        "skills": [ \
+          "/home/opencode/skills", \
+          "/home/opencode/plugins" \
+        ], \
+        "permissions": [ \
+          { "action": "external_directory", "resource": "/home/opencode/**", "effect": "allow" }, \
+          { "action": "external_directory", "resource": "/etc/opencode/**", "effect": "allow" } \
+        ] \
       }; \
       require("fs").writeFileSync("/etc/opencode/opencode.json", JSON.stringify(config, null, 2)); \
     '
