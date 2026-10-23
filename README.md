@@ -75,6 +75,23 @@ Quando è presente il parametro `--port`, `opencode.sh` espone automaticamente l
 
 > **Nota:** Se non hai impostato `OPENCODE_SERVER_PASSWORD` nel file `.env`, OpenCode stamperà a terminale la password generata per l'autenticazione all'avvio del server.
 
+#### Usare la CLI/TUI mentre il server è attivo
+
+Il comando `serve` avvia esclusivamente il server HTTP/API in foreground (il terminale rimane in ascolto per Obsidian o altri client e non apre la TUI). Mentre il server è attivo, puoi comunque usare la CLI/TUI da un **secondo terminale** in due modi:
+
+1. **Istanza TUI indipendente (classica):**
+   Eseguendo semplicemente `opencode` (senza `serve` e senza `--port`), viene avviato un nuovo container con l'interfaccia TUI interattiva senza alcun conflitto di porta, poiché la porta viene esposta su Docker solo quando è specificato `--port`:
+   ```bash
+   /percorso/a/opencode.sh
+   ```
+
+2. **Collegare la TUI allo stesso server di Obsidian:**
+   Se vuoi visualizzare e continuare da terminale le **stesse sessioni in tempo reale** che stai usando su Obsidian, puoi collegare la TUI al server già in ascolto sulla porta `4096` usando il flag `--server`:
+   ```bash
+   /percorso/a/opencode.sh --server http://host.docker.internal:4096
+   ```
+   *(Si utilizza `host.docker.internal:4096` perché anche il client TUI gira in un container Docker e raggiunge così la porta `4096` esposta sull'host dal container server).*
+
 ### Cosa fa lo script all'avvio:
 
 1.  **Carica la configurazione:** Risolve il percorso reale dello script (anche se invocato tramite symlink), legge il file `.env` e verifica la presenza di `LLM_API_BASE` e `LLM_API_KEY`.
