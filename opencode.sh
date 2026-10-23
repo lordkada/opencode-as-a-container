@@ -84,15 +84,57 @@ TTY_FLAGS=()
 GITCONFIG_MOUNT=()
 [[ -f "$HOME/.gitconfig" ]] && GITCONFIG_MOUNT=(-v "$HOME/.gitconfig:/home/opencode/.gitconfig:ro")
 
+# Normalizza l'alias "server" in "serve"
+if [[ "${1:-}" == "server" ]]; then
+  shift
+  set -- serve "$@"
+fi
+
+# Espone la porta del container solo se è presente il parametro --port
+DOCKER_PORT_FLAGS=()
+PORT=""
+HAS_HOSTNAME=false
+ARGS=("$@")
+for ((i=0; i<${#ARGS[@]}; i++)); do
+  case "${ARGS[$i]}" in
+    --port)
+      if (( i + 1 < ${#ARGS[@]} )); then
+        PORT="${ARGS[$((i + 1))]}"
+      fi
+      ;;
+    --port=*)
+      PORT="${ARGS[$i]#--port=}"
+      ;;
+    --hostname|--hostname=*)
+      HAS_HOSTNAME=true
+      ;;
+  esac
+done
+
+if [[ -n "$PORT" ]]; then
+  DOCKER_PORT_FLAGS=(-p "${PORT}:${PORT}")
+  # Nel container, "opencode serve" deve ascoltare su 0.0.0.0 affinché il port forwarding Docker funzioni
+  if [[ "${1:-}" == "serve" && "$HAS_HOSTNAME" == false ]]; then
+    shift
+    set -- serve --hostname 0.0.0.0 "$@"
+  fi
+fi
+
+# Passa la password del server se configurata (opzionale, utile per "opencode serve")
+SERVER_ENV_FLAGS=()
+[[ -n "${OPENCODE_SERVER_PASSWORD:-}" ]] && SERVER_ENV_FLAGS=(-e OPENCODE_SERVER_PASSWORD="$OPENCODE_SERVER_PASSWORD")
+
 # 3. Avvia il container
 # - Passiamo LLM_API_BASE e LLM_API_KEY come variabili d'ambiente al container,
 #   così opencode.json le leggerà tramite {env:...}
 # - Montiamo la cartella corrente dell'utente ($PWD) in /work
 # - Montiamo la cartella dati/plugin/skill di opencode ($DATA_DIR) in /home/opencode
 exec docker run --rm "${TTY_FLAGS[@]}" \
+  "${DOCKER_PORT_FLAGS[@]}" \
   -e LLM_API_BASE="$LLM_API_BASE" \
   -e LLM_API_KEY="$LLM_API_KEY" \
   -e OLLAMA_API_BASE="$OLLAMA_API_BASE" \
+  "${SERVER_ENV_FLAGS[@]}" \
   -v "$PWD":/work \
   -v "$DATA_DIR":/home/opencode \
   "${GITCONFIG_MOUNT[@]}" \

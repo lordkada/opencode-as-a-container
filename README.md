@@ -46,6 +46,7 @@ cp .env.template .env
 | `AVAILABLE_MODELS` | No | Valore di `MODEL` | Lista di modelli disponibili (separati da virgola) configurati in `opencode.json`. |
 | `OPENCODE_IMAGE` | No | `opencode-local:latest` | Nome e tag dell'immagine Docker locale. |
 | `OPENCODE_DATA_DIR` | No | `<SCRIPT_DIR>/opencode-data` | Percorso locale usato per persistere stato, configurazione, plugin e skill in `/home/opencode`. |
+| `OPENCODE_SERVER_PASSWORD` | No | *(casuale)* | Password fissa per la modalità server (`opencode serve`). Se non impostata, OpenCode ne genera una casuale a ogni avvio. |
 
 ### 3. Rendi eseguibile lo script
 
@@ -62,6 +63,17 @@ Puoi eseguire `opencode.sh` da qualsiasi directory del tuo sistema (anche aggiun
 ```bash
 /percorso/a/opencode.sh [argomenti-opzionali-per-opencode]
 ```
+
+### Modalità Server (es. integrazione con Obsidian)
+
+È possibile avviare OpenCode in modalità server HTTP/API passando il comando `serve` (o l'alias `server`) e specificando `--port`.  
+Quando è presente il parametro `--port`, `opencode.sh` espone automaticamente la porta corrispondente sul container Docker (`-p <porta>:<porta>`) e imposta `--hostname 0.0.0.0` nel container per consentire le connessioni dall'host:
+
+```bash
+/percorso/a/opencode.sh serve --port 4096 --cors app://obsidian.md
+```
+
+> **Nota:** Se non hai impostato `OPENCODE_SERVER_PASSWORD` nel file `.env`, OpenCode stamperà a terminale la password generata per l'autenticazione all'avvio del server.
 
 ### Cosa fa lo script all'avvio:
 
