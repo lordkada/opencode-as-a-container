@@ -94,16 +94,17 @@ fi
 DOCKER_PORT_FLAGS=()
 PORT=""
 HAS_HOSTNAME=false
-ARGS=("$@")
-for ((i=0; i<${#ARGS[@]}; i++)); do
-  case "${ARGS[$i]}" in
+for ((i=1; i<=$#; i++)); do
+  arg="${!i}"
+  case "$arg" in
     --port)
-      if (( i + 1 < ${#ARGS[@]} )); then
-        PORT="${ARGS[$((i + 1))]}"
+      next=$((i + 1))
+      if (( next <= $# )); then
+        PORT="${!next}"
       fi
       ;;
     --port=*)
-      PORT="${ARGS[$i]#--port=}"
+      PORT="${arg#--port=}"
       ;;
     --hostname|--hostname=*)
       HAS_HOSTNAME=true
@@ -129,13 +130,13 @@ SERVER_ENV_FLAGS=()
 #   così opencode.json le leggerà tramite {env:...}
 # - Montiamo la cartella corrente dell'utente ($PWD) in /work
 # - Montiamo la cartella dati/plugin/skill di opencode ($DATA_DIR) in /home/opencode
-exec docker run --rm "${TTY_FLAGS[@]}" \
-  "${DOCKER_PORT_FLAGS[@]}" \
+exec docker run --rm ${TTY_FLAGS[@]+"${TTY_FLAGS[@]}"} \
+  ${DOCKER_PORT_FLAGS[@]+"${DOCKER_PORT_FLAGS[@]}"} \
   -e LLM_API_BASE="$LLM_API_BASE" \
   -e LLM_API_KEY="$LLM_API_KEY" \
   -e OLLAMA_API_BASE="$OLLAMA_API_BASE" \
-  "${SERVER_ENV_FLAGS[@]}" \
+  ${SERVER_ENV_FLAGS[@]+"${SERVER_ENV_FLAGS[@]}"} \
   -v "$PWD":/work \
   -v "$DATA_DIR":/home/opencode \
-  "${GITCONFIG_MOUNT[@]}" \
+  ${GITCONFIG_MOUNT[@]+"${GITCONFIG_MOUNT[@]}"} \
   "$IMAGE" "$@"
