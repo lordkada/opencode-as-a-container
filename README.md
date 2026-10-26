@@ -57,7 +57,7 @@ chmod +x opencode.sh
 
 ## Utilizzo
 
-Puoi eseguire `opencode.sh` da qualsiasi directory del tuo sistema (anche aggiungendolo al tuo `PATH`, tramite un alias o creando un symlink es. `ln -s /percorso/a/opencode.sh ~/.local/bin/opencode`). Lo script monterà automaticamente la directory di lavoro corrente (`$PWD`) in `/work` e la propria cartella `opencode-data/` in `/home/opencode`:
+Puoi eseguire `opencode.sh` da qualsiasi directory del tuo sistema (anche aggiungendolo al tuo `PATH`, tramite un alias o creando un symlink es. `ln -s /percorso/a/opencode.sh ~/.local/bin/opencode`). Lo script monterà automaticamente la directory di lavoro corrente (`$PWD`) nello stesso percorso all'interno del container (`-v "$PWD":"$PWD" -w "$PWD"`) e la propria cartella `opencode-data/` in `/home/opencode`:
 
 ```bash
 /percorso/a/opencode.sh [argomenti-opzionali-per-opencode]
@@ -66,9 +66,10 @@ Puoi eseguire `opencode.sh` da qualsiasi directory del tuo sistema (anche aggiun
 ### Cosa fa lo script all'avvio:
 
 1.  **Carica la configurazione:** Risolve il percorso reale dello script (anche se invocato tramite symlink), legge il file `.env` e verifica la presenza di `LLM_API_BASE` e `LLM_API_KEY`.
-2.  **Compila l'immagine Docker (se necessario):** Costruisce l'immagine `opencode-local:latest` solo se l'immagine non esiste ancora o se sono cambiati il `Dockerfile`, `OPENCODE_VERSION`, `MODEL` o `AVAILABLE_MODELS`.
-3.  **Avvia il container:** Esegue Opencode con l'utente `node` del container, montando:
-    -   La directory di lavoro corrente dell'utente (`$PWD`) in `/work`.
+2.  **Prepara la cartella dati (`opencode-data/`):** Assicura la presenza delle sottocartelle necessarie, disabilita il background service condiviso e genera (se non esiste già) un file `opencode-data/.config/opencode/AGENTS.md` globale che istruisce l'agente sul fatto di trovarsi in un container Linux isolato con visibilità limitata alla sola cartella di lavoro e di utilizzare percorsi relativi nelle note.
+3.  **Compila l'immagine Docker (se necessario):** Costruisce l'immagine `opencode-local:latest` solo se l'immagine non esiste ancora o se sono cambiati il `Dockerfile`, `OPENCODE_VERSION`, `MODEL` o `AVAILABLE_MODELS`.
+4.  **Avvia il container:** Esegue Opencode con l'utente `node` del container, montando:
+    -   La directory di lavoro corrente dell'utente (`$PWD`) nello stesso percorso (`$PWD`) all'interno del container, preservando così il path dell'host e separando correttamente le sessioni di progetti diversi.
     -   La cartella locale `opencode-data/` (nella directory dello script) in `/home/opencode` (`HOME` del container).
     -   Il file `~/.gitconfig` dell'host in `/home/opencode/.gitconfig` (in sola lettura, se presente).
 
@@ -78,6 +79,7 @@ La cartella `opencode-data/` (montata in `/home/opencode` con permessi di lettur
 
 -   **Skill (`opencode-data/skills/` o `opencode-data/plugins/`):** Qualsiasi file `SKILL.md` (e relativi file di supporto o script) posizionato dentro `opencode-data/skills/<nome>/SKILL.md` o all'interno di repository clonati in `opencode-data/plugins/` (es. `opencode-data/plugins/karness/...`) viene rilevato ricorsivamente in automatico.
 -   **Configurazione globale Opencode (`opencode-data/.config/opencode/`):**
+    -   `AGENTS.md`: istruzioni globali caricate in tutte le sessioni (preconfigurato per informare l'agente dell'ambiente containerizzato e dell'uso di percorsi relativi).
     -   `opencode.json` / `opencode.jsonc`: configurazione globale utente.
     -   `agents/<nome>.md`: agent globali.
     -   `commands/<nome>.md`: slash command globali.

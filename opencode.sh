@@ -38,6 +38,18 @@ if ! grep -q '"disabled"[[:space:]]*:[[:space:]]*true' "$SERVICE_CONFIG" 2>/dev/
 fi
 rm -f "$DATA_DIR/.local/state/opencode/service.json"
 
+# Crea il file AGENTS.md globale di default (se non esiste già) per dare contesto all'agente sull'ambiente containerizzato
+GLOBAL_AGENTS_FILE="$DATA_DIR/.config/opencode/AGENTS.md"
+if [[ ! -f "$GLOBAL_AGENTS_FILE" ]]; then
+  cat << 'EOF' > "$GLOBAL_AGENTS_FILE"
+# Contesto dell'ambiente di esecuzione
+
+- Stai girando all'interno di un container Linux isolato (Docker), non direttamente sul sistema operativo host (es. macOS).
+- Hai visibilità esclusivamente sulla cartella di lavoro corrente montata dall'host (e sulla directory di configurazione/dati `/home/opencode`). Non hai accesso al resto del filesystem dell'host.
+- Nelle risposte, nella documentazione e nelle note (es. vault Obsidian o file Markdown), utilizza sempre **percorsi relativi** alla cartella di lavoro anziché percorsi assoluti.
+EOF
+fi
+
 # Assicuriamoci che i parametri per LiteLLM siano presenti
 if [[ -z "${LLM_API_BASE:-}" ]] || [[ -z "${LLM_API_KEY:-}" ]]; then
   echo "Errore: LLM_API_BASE o LLM_API_KEY non sono definite nel file .env" >&2
@@ -87,13 +99,15 @@ GITCONFIG_MOUNT=()
 # 3. Avvia il container
 # - Passiamo LLM_API_BASE e LLM_API_KEY come variabili d'ambiente al container,
 #   così opencode.json le leggerà tramite {env:...}
-# - Montiamo la cartella corrente dell'utente ($PWD) in /work
+# - Montiamo la cartella corrente dell'utente ($PWD) nello stesso percorso del container (-v "$PWD":"$PWD" -w "$PWD")
+#   per preservare i percorsi reali dell'host ed evitare collisioni tra sessioni di progetti diversi
 # - Montiamo la cartella dati/plugin/skill di opencode ($DATA_DIR) in /home/opencode
-exec docker run --rm "${TTY_FLAGS[@]}" \
+exec docker run --rm ${TTY_FLAGS[@]+"${TTY_FLAGS[@]}"} \
   -e LLM_API_BASE="$LLM_API_BASE" \
   -e LLM_API_KEY="$LLM_API_KEY" \
   -e OLLAMA_API_BASE="$OLLAMA_API_BASE" \
-  -v "$PWD":/work \
+  -v "$PWD":"$PWD" \
+  -w "$PWD" \
   -v "$DATA_DIR":/home/opencode \
-  "${GITCONFIG_MOUNT[@]}" \
+  ${GITCONFIG_MOUNT[@]+"${GITCONFIG_MOUNT[@]}"} \
   "$IMAGE" "$@"
