@@ -103,9 +103,9 @@ GITCONFIG_MOUNT=()
 #   per preservare i percorsi reali dell'host ed evitare collisioni tra sessioni di progetti diversi
 # - Montiamo la cartella dati/plugin/skill di opencode ($DATA_DIR) in /home/opencode
 exec docker run --rm ${TTY_FLAGS[@]+"${TTY_FLAGS[@]}"} \
-  -e LLM_API_BASE="$LLM_API_BASE" \
-  -e LLM_API_KEY="$LLM_API_KEY" \
-  -e OLLAMA_API_BASE="$OLLAMA_API_BASE" \
+  -e LLM_API_BASE \
+  -e LLM_API_KEY \
+  -e OLLAMA_API_BASE \
   -v "$PWD":"$PWD" \
   -w "$PWD" \
   -v "$DATA_DIR":/home/opencode \
