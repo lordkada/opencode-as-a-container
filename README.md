@@ -46,6 +46,7 @@ cp .env.template .env
 | `AVAILABLE_MODELS` | No | Valore di `MODEL` | Lista di modelli disponibili (separati da virgola) configurati in `opencode.json`. |
 | `OPENCODE_IMAGE` | No | `opencode-local:latest` | Nome e tag dell'immagine Docker locale. |
 | `OPENCODE_DATA_DIR` | No | `<SCRIPT_DIR>/opencode-data` | Percorso locale usato per persistere stato, configurazione, plugin e skill in `/home/opencode`. |
+| `GH_TOKEN` | No | - | Personal Access Token di GitHub per autenticare automaticamente `gh` all'interno del container. |
 
 ### 3. Rendi eseguibile lo script
 
@@ -124,13 +125,15 @@ Grazie al modo in cui `opencode.sh` monta i volumi, puoi affiancare **Opencode n
 - **Zero conflitti sui path:** Poiché il percorso assoluto dentro il container coincide con quello dell'host, i riferimenti ai file, i worktree Git e la cronologia delle sessioni di Opencode rimangono coerenti.
 
 #### 2. Configurazione una-tantum di GitHub CLI (`gh`) e Git
-Poiché la `$HOME` del container (`/home/opencode`) è persistita nella cartella `opencode-data/` sull'host:
+Poiché la `$HOME` del container (`/home/opencode`) è persistita nella cartella `opencode-data/` sull'host, puoi autenticare `gh` in due modi:
 
-1. **Autenticazione con `gh`:**
-   Avvia Opencode (o esegui `gh auth login` dalla shell interna di Opencode con `!gh auth login`) e segui il flusso di login via browser o token.
+1. **Tramite variabile `GH_TOKEN` (nel file `.env` o nell'ambiente):**
+   Imposta `GH_TOKEN=ghp_...` nel file `.env`; `opencode.sh` la passerà automaticamente al container e `gh` risulterà subito autenticato senza dover eseguire il login interattivo.
+2. **Tramite login interattivo persistente (`gh auth login`):**
+   Avvia Opencode ed esegui `!gh auth login` per effettuare il login via browser o token.
    - Le credenziali verranno salvate in `opencode-data/.config/gh/` e **rimarranno persistenti** in tutte le sessioni future e su tutti i progetti.
-   - Configura `gh` come credential helper per Git (`!gh auth setup-git`) così anche `git push`, `git pull` e `git fetch` su repository HTTPS useranno automaticamente il token di `gh`.
-2. **Identità Git e firme GPG:**
+   - Configura `gh` come credential helper per Git (`!gh auth setup-git`) così anche `git push`, `git pull` e `git fetch` su repository HTTPS useranno automaticamente l'autenticazione di `gh`.
+3. **Identità Git e firme GPG:**
    - Il file `~/.gitconfig` dell'host viene montato automaticamente in sola lettura (`/home/opencode/.gitconfig`).
    - *Nota su GPG:* Se sull'host hai `commit.gpgsign=true` nel tuo `.gitconfig`, all'interno del container i commit possono essere eseguiti passando `--no-gpg-sign` (oppure lasciando che sia l'IDE locale a firmare i commit quando preferisci).
 

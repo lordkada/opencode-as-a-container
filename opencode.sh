@@ -106,6 +106,7 @@ exec docker run --rm ${TTY_FLAGS[@]+"${TTY_FLAGS[@]}"} \
   -e LLM_API_BASE \
   -e LLM_API_KEY \
   -e OLLAMA_API_BASE \
+  -e GH_TOKEN \
   -v "$PWD":"$PWD" \
   -w "$PWD" \
   -v "$DATA_DIR":/home/opencode \
