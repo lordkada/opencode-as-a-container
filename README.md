@@ -96,3 +96,52 @@ Se desideri forzare la ricompilazione dell'immagine Docker (ad esempio dopo aver
 ```bash
 REBUILD=1 ./opencode.sh
 ```
+
+## Guida per gli sviluppatori
+
+### Pacchetti inclusi nell'immagine Docker
+
+L'immagine è basata su **`node:22-slim`** (Debian 12 Bookworm) e include i seguenti strumenti preinstallati a disposizione dell'agente e dello sviluppatore:
+
+| Pacchetto / Tool | Descrizione e utilizzo nel container |
+| :--- | :--- |
+| **Node.js 22 & npm** | Runtime JavaScript/TypeScript, gestione pacchetti ed esecuzione di script/test di progetto. |
+| **`@opencode/cli`** | L'agente CLI/TUI Opencode (versione configurabile tramite `OPENCODE_VERSION`). |
+| **`git`** | Gestione del controllo versione, branch, diff, commit e operazioni sui repository. |
+| **`gh` (GitHub CLI)** | Interazione diretta con GitHub (Pull Request, Issue, code review, Actions, release e push/fetch autenticati). |
+| **`ripgrep` (`rg`)** | Ricerca testuale ultraveloce nel codice sorgente, utilizzata anche internamente da Opencode. |
+| **`python3`** | Esecuzione di script Python, automazioni e script di supporto delle skill (es. raccolta dati o analisi). |
+| **`ca-certificates`** | Certificati root SSL/TLS per connessioni HTTPS sicure verso API, GitHub e registry. |
+
+---
+
+### Use Case: Sviluppo e Code Review tra IDE locale, Container e GitHub
+
+Grazie al modo in cui `opencode.sh` monta i volumi, puoi affiancare **Opencode nel container** al tuo **IDE locale** (VS Code, Cursor, IntelliJ, Zed, ecc.) lavorando sugli stessi file in tempo reale e interagendo continuamente con GitHub.
+
+#### 1. Sincronia in tempo reale con l'IDE locale
+- **Stesso filesystem, stessi percorsi:** Lo script monta la directory del progetto corrente con `-v "$PWD":"$PWD" -w "$PWD"`. Qualsiasi modifica effettuata da Opencode nel container (creazione file, refactoring, checkout di un branch) è **immediatamente visibile nel tuo IDE locale** e viceversa.
+- **Zero conflitti sui path:** Poiché il percorso assoluto dentro il container coincide con quello dell'host, i riferimenti ai file, i worktree Git e la cronologia delle sessioni di Opencode rimangono coerenti.
+
+#### 2. Configurazione una-tantum di GitHub CLI (`gh`) e Git
+Poiché la `$HOME` del container (`/home/opencode`) è persistita nella cartella `opencode-data/` sull'host:
+
+1. **Autenticazione con `gh`:**
+   Avvia Opencode (o esegui `gh auth login` dalla shell interna di Opencode con `!gh auth login`) e segui il flusso di login via browser o token.
+   - Le credenziali verranno salvate in `opencode-data/.config/gh/` e **rimarranno persistenti** in tutte le sessioni future e su tutti i progetti.
+   - Configura `gh` come credential helper per Git (`!gh auth setup-git`) così anche `git push`, `git pull` e `git fetch` su repository HTTPS useranno automaticamente il token di `gh`.
+2. **Identità Git e firme GPG:**
+   - Il file `~/.gitconfig` dell'host viene montato automaticamente in sola lettura (`/home/opencode/.gitconfig`).
+   - *Nota su GPG:* Se sull'host hai `commit.gpgsign=true` nel tuo `.gitconfig`, all'interno del container i commit possono essere eseguiti passando `--no-gpg-sign` (oppure lasciando che sia l'IDE locale a firmare i commit quando preferisci).
+
+#### 3. Flusso di lavoro consigliato (Sviluppo + PR Review)
+
+- **Sviluppo assistito su una feature:**
+  1. Apri il progetto nel tuo IDE locale e avvia `opencode` nel terminale integrato dell'IDE (o in un terminale separato nella stessa cartella).
+  2. Chiedi a Opencode di creare un branch, implementare una modifica o scrivere test.
+  3. Controlla le modifiche in tempo reale dal tab *Source Control* / *Git Diff* del tuo IDE, rifinisci il codice se necessario e chiedi a Opencode di fare commit, push e aprire la Pull Request tramite `gh pr create`.
+
+- **Code Review interattiva di una Pull Request:**
+  1. Chiedi a Opencode di elencare o ispezionare le PR aperte (`gh pr list`, `gh pr view <num>`, `gh pr diff <num>`).
+  2. Per testare o navigare il codice della PR nel tuo IDE locale, chiedi a Opencode di fare il checkout della PR (`gh pr checkout <num>`): l'IDE locale si aggiornerà istantaneamente sul branch della PR, permettendoti di usare il go-to-definition, il debugger e i tool dell'IDE mentre discuti il codice con l'agente.
+  3. Chiedi a Opencode di verificare lo stato della CI (`gh pr checks`), analizzare eventuali fallimenti nei log (`gh run view --log-failed`) o pubblicare commenti e review direttamente su GitHub (`gh pr review` / `gh pr comment`).
